@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Bug Reporter Test</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  </head>
+  <body>
+    <h1>Hello Bug Reporter</h1>
+    <button onclick="bug.openModal()">🪲 Report Bug</button>
+
+    <!-- UMD formatdagi script -->
+    <script src="./dist/index.umd.js"></script>
+
+    <!-- Test uchun ishlatish -->
+    <script>
+      const bug = new BugReporter.BugReporter({
+        project: "EFS",
+      });
+
+
+      window.addEventListener('load', () => {
+        console.log('Page loaded');
+        setTimeout(() => {
+        axios.get('http://test.ru/wrong-url'); // 404 test
+      }, 1000);
+      });
+      
+    </script>
+  </body>
+</html>

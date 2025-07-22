@@ -1,0 +1,40 @@
+{
+  "name": "bug-reporter",
+  "version": "1.0.0",
+  "description": "A lightweight and framework-agnostic JavaScript bug reporter with screenshot capture, error logging, and Axios error tracking. Designed to work seamlessly in Vue, React, and plain JavaScript projects.",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [
+    "bug-reporter",
+    "html2canvas",
+    "framework-agnostic",
+    "javascript",
+    "error-tracking"
+  ],
+  "author": "Zafar Yodgorov",
+  "license": "MIT",
+  "peerDependencies": {
+    "html2canvas": "^1.4.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.8.3",
+    "vite": "^7.0.5",
+    "vite-plugin-dts": "^4.5.4"
+  }
+}
