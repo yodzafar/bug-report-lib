@@ -29,6 +29,11 @@ export class BugReporter {
   }
 
   private setupErrorListeners() {
+    console.log(
+      "Setting up error listeners for BugReporter",
+      (window as any).axios
+    )
+
     // Axios
     if (typeof window !== "undefined" && (window as any).axios) {
       console.log("Axios detected, setting up interceptors")
