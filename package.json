@@ -1,6 +1,6 @@
 {
   "name": "bug-reporterjs-lib",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A lightweight and framework-agnostic JavaScript bug reporter with screenshot capture, error logging, and Axios error tracking. Designed to work seamlessly in Vue, React, and plain JavaScript projects.",
   "repository": {
     "type": "git",
@@ -11,6 +11,7 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "require": "./dist/index.cjs",
       "import": "./dist/index.mjs"
     }
