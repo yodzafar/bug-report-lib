@@ -31,9 +31,11 @@ export class BugReporter {
   private setupErrorListeners() {
     // Axios
     if (typeof window !== "undefined" && (window as any).axios) {
+      console.log("Axios detected, setting up interceptors")
       ;(window as any).axios.interceptors.response.use(
         (response: any) => response,
         (error: any) => {
+          console.error("Axios error captured:", error)
           this.storeError({
             request_url: error.config?.url,
             request_payload: error.config?.data,
@@ -74,18 +76,15 @@ export class BugReporter {
   }
 
   private storeError(error: Partial<BugReportData>) {
-    const prev = JSON.parse(localStorage.getItem("bug-reporter") || "[]")
+    const prev = JSON.parse(localStorage.getItem("bug-reporter") || "{}")
     localStorage.setItem(
       "bug-reporter",
-      JSON.stringify([
-        ...prev,
-        {
-          ...error,
-          location_url: window.location.href,
-          user_agent: navigator.userAgent,
-          project_name: this.project,
-        },
-      ])
+      JSON.stringify({
+        ...error,
+        location_url: window.location.href,
+        user_agent: navigator.userAgent,
+        project_name: this.project,
+      })
     )
   }
 
