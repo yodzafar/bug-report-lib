@@ -32,7 +32,7 @@
   ],
   "author": "Zafar Yodgorov",
   "license": "MIT",
-  "peerDependencies": {
+  "dependencies": {
     "html2canvas": "^1.4.1"
   },
   "devDependencies": {

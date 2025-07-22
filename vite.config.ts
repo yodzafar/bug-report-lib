@@ -15,10 +15,9 @@ export default defineConfig({
       formats: ["es", "cjs", "umd"],
     },
     rollupOptions: {
-      external: ["html2canvas"],
       output: {
         globals: {
-          html2canvas: "html2canvas",
+          html2canvas: "html2canvas", // Bu qolishi mumkin, lekin istasangiz olib tashlashingiz ham mumkin
         },
       },
     },
