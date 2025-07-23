@@ -10,7 +10,10 @@ interface ModalProps {
   project_name: string
 }
 
-export function createModal(data: ModalProps) {
+const devUrl = "http://localhost:3000/report"
+const prodUrl = "http://p-c-ers.asakabank.com/report"
+
+export function createModal(img: string) {
   // Modal container
   const modal = document.createElement("div")
   modal.id = "bug-modal"
@@ -137,7 +140,7 @@ export function createModal(data: ModalProps) {
         <h2>Сообщить об ошибке</h2>
         <span id="close-modal">&times;</span>
       </div>
-      <img src="${data.image}" alt="Screenshot"/>
+      <img src="${img}" alt="Screenshot"/>
       <textarea id="bug-comment" rows="3" placeholder="Оставить комментарий..."></textarea>
       <div class="button-container">
         <button id="send-btn">Отправить ошибку</button>
@@ -156,18 +159,28 @@ export function createModal(data: ModalProps) {
     const comment = (
       document.getElementById("bug-comment") as HTMLTextAreaElement
     )?.value
-    const payload = JSON.stringify({ ...data, comment })
+    const data = JSON.parse(localStorage.getItem("bug-reporter") || "{}")
+    const payload = JSON.stringify({ ...data, image: img, comment })
 
     try {
-      await fetch("http://localhost:3000/report", {
+      const res = await fetch(prodUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: payload,
       })
-      alert("Report sent successfully!")
-      localStorage.removeItem("bug-reporter")
+
+      const responseData = await res.json()
+
+      if (!res.ok) {
+        console.error("Server returned error response:", responseData)
+        alert("Error sending bug report.")
+      } else {
+        alert("Report sent successfully!")
+        localStorage.removeItem("bug-reporter")
+      }
     } catch (e) {
       alert("Error sending bug report.")
+      console.error("Network or other error:", e)
     }
 
     modal.remove()

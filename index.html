@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <title>Bug Reporter Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   </head>
   <body>
     <h1>Hello Bug Reporter</h1>
@@ -21,7 +22,7 @@
       window.addEventListener('load', () => {
         console.log('Page loaded');
         setTimeout(() => {
-        fetch('http://test.ru/wrong-url')
+        axios.get('http://test.ru/wrong-url')
       }, 1000);
       });
       
