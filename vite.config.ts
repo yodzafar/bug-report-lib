@@ -17,7 +17,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         globals: {
-          html2canvas: "html2canvas", // Bu qolishi mumkin, lekin istasangiz olib tashlashingiz ham mumkin
+          htmlToImage: "htmlToImage",
         },
       },
     },

@@ -196,12 +196,12 @@ export class BugReporter {
       response_data: error.response_data ?? {},
     }
 
-    localStorage.setItem("bug-reporter", JSON.stringify(newEntry))
+    localStorage.setItem("LAST_ERROR_REQUEST", JSON.stringify(newEntry))
   }
 
   public async openModal() {
     const list: BugReportData = JSON.parse(
-      localStorage.getItem("bug-reporter") || "{}"
+      localStorage.getItem("LAST_ERROR_REQUEST") || "{}"
     )
     console.log(list)
 

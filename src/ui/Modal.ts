@@ -1,15 +1,3 @@
-interface ModalProps {
-  image: string
-  location_url: string
-  user_agent: string
-  request_url: string
-  request_header: Record<string, any>
-  request_status_code?: number
-  request_payload?: Record<string, any>
-  response_data?: Record<string, any>
-  project_name: string
-}
-
 const devUrl = "http://localhost:3000/report"
 const prodUrl = "http://p-c-ers.asakabank.com/report"
 
@@ -33,10 +21,7 @@ export function createModal(img: string) {
             font-style: auto;
         }
 
-    * {
-      box-sizing: border-box;
-      font-family: "Acrom", sans-serif;
-    }
+   
 
       #bug-modal {
         position: fixed;
@@ -48,6 +33,11 @@ export function createModal(img: string) {
         align-items: center;
         justify-content: center;
         z-index: 9999;
+      }
+
+      #bug-modal * {
+        box-sizing: border-box;
+        font-family: "Acrom", sans-serif;
       }
 
       #bug-modal .modal-content {
@@ -74,12 +64,14 @@ export function createModal(img: string) {
         cursor: pointer;
         font-size: 32px;
         color: #333;
-        transition: color 0.2s;
+        transition: all 0.2s;
+        line-height: 1;
       }
 
       #bug-modal h2 {
         margin: 0;
         font-size: 20px;
+        color: #333;
       }
 
       #bug-modal img {
@@ -88,11 +80,10 @@ export function createModal(img: string) {
         object-fit: cover;
         object-position: top;
         border: 1px solid #CED4DA;
-        border-radius: 15px;
       }
 
       #bug-modal textarea {
-        padding: 30px 15px;
+        padding: 15px;
         font-size: 14px;
         border: 1px solid #CED4DA;
         border-radius: 30px;
