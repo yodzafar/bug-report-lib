@@ -20,6 +20,12 @@
 export async function captureScreenshot(): Promise<string> {
   const domtoimage = await import("html-to-image")
   const element = document.body // yoki kerakli element
-  const dataUrl = await domtoimage.toPng(element)
+  const dataUrl = await domtoimage.toJpeg(element, {
+    quality: 1,
+    pixelRatio: 1,
+    skipAutoScale: true,
+    width: element.clientWidth,
+    height: element.clientHeight,
+  })
   return dataUrl
 }

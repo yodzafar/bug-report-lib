@@ -91,6 +91,15 @@ export function createModal(img: string) {
         resize: none;
       }
 
+      #bug-modal input {
+        padding: 15px;
+        font-size: 14px;
+        border: 1px solid #CED4DA;
+        border-radius: 30px;
+        outline: none;
+        resize: none;
+      }
+
       #bug-modal textarea:hover,#bug-modal textarea:focus {
         border-color: #232323;
       
@@ -132,6 +141,7 @@ export function createModal(img: string) {
         <span id="close-modal">&times;</span>
       </div>
       <img src="${img}" alt="Screenshot"/>
+      <input type="tel" pattern="^\+998(9[0-9]|8[1-9]|7[1-9])[0-9]{7}$" placeholder="+998901234567" id="bug-phone" />
       <textarea id="bug-comment" rows="3" placeholder="Оставить комментарий..."></textarea>
       <div class="button-container">
         <button id="send-btn">Отправить ошибку</button>
@@ -150,8 +160,10 @@ export function createModal(img: string) {
     const comment = (
       document.getElementById("bug-comment") as HTMLTextAreaElement
     )?.value
-    const data = JSON.parse(localStorage.getItem("bug-reporter") || "{}")
-    const payload = JSON.stringify({ ...data, image: img, comment })
+    const phone = (document.getElementById("bug-phone") as HTMLInputElement)
+      ?.value
+    const data = JSON.parse(localStorage.getItem("LAST_ERROR_REQUEST") || "{}")
+    const payload = JSON.stringify({ ...data, image: img, comment, phone })
 
     try {
       const res = await fetch(prodUrl, {
@@ -179,5 +191,26 @@ export function createModal(img: string) {
 
   modal.addEventListener("click", (e) => {
     if (e.target === modal) modal.remove()
+  })
+
+  const input = document.getElementById("bug-phone")
+
+  input?.addEventListener("input", (e) => {
+    // Faqat raqamlar va "+" belgisi ruxsat etiladi
+    let value = (e.target as HTMLInputElement)?.value.replace(/[^\d+]/g, "")
+
+    // "+" belgisi faqat boshida bo'lishi mumkin
+    if (value.includes("+")) {
+      value = "+" + value.replace(/\+/g, "")
+    }
+
+    // Maksimal uzunlik nazorati (masalan: +998901234567 — 13 belgidan iborat)
+    if (value.length > 13) {
+      value = value.slice(0, 13)
+    }
+
+    if (e.target) {
+      ;(e.target as HTMLInputElement).value = value
+    }
   })
 }
