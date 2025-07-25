@@ -13,5 +13,5 @@ export interface BugReporterOptions {
 
 export declare class BugReporter {
   constructor(options: BugReporterOptions)
-  openModal(): void
+  openModal(cb?: (status: boolean) => void): void
 }

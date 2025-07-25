@@ -1,7 +1,7 @@
 const devUrl = "http://localhost:3000/report"
 const prodUrl = "http://p-c-ers.asakabank.com/report"
 
-export function createModal(img: string) {
+export function createModal(img: string, cb?: (status: boolean) => void) {
   // Modal container
   const modal = document.createElement("div")
   modal.id = "bug-modal"
@@ -176,14 +176,15 @@ export function createModal(img: string) {
 
       if (!res.ok) {
         console.error("Server returned error response:", responseData)
-        alert("Error sending bug report.")
+        if (cb) cb(false)
       } else {
-        alert("Report sent successfully!")
+        if (cb) cb(false)
         localStorage.removeItem("bug-reporter")
       }
     } catch (e) {
       alert("Error sending bug report.")
       console.error("Network or other error:", e)
+      if (cb) cb(true)
     }
 
     modal.remove()

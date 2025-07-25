@@ -199,17 +199,16 @@ export class BugReporter {
     localStorage.setItem("LAST_ERROR_REQUEST", JSON.stringify(newEntry))
   }
 
-  public async openModal() {
+  public async openModal(cb?: (status: boolean) => void) {
     const list: BugReportData = JSON.parse(
       localStorage.getItem("LAST_ERROR_REQUEST") || "{}"
     )
-    console.log(list)
 
     if (!list || (list && Object.keys(list).length === 0))
       return alert("No bugs captured")
 
     const image = await captureScreenshot()
 
-    createModal(image)
+    createModal(image, cb)
   }
 }
