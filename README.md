@@ -17,6 +17,24 @@ npm install bug-reporterjs-lib
 
 ## Usage in Frontend Frameworks
 
+### Handling Report Status
+
+You can pass a callback to `openModal(cb)` which receives a boolean `status` argument. If `status` is `true`, the report was sent successfully. If `false`, sending failed.
+
+**Example:**
+
+```js
+reporter.openModal((status) => {
+  if (status) {
+    // Report sent successfully
+    alert('Report sent!');
+  } else {
+    // Sending failed
+    alert('Failed to send report.');
+  }
+});
+```
+
 ### React
 
 ```tsx
