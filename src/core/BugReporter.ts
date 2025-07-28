@@ -1,7 +1,14 @@
 import { captureScreenshot } from "../utils/capture"
 import { createModal } from "../ui/Modal"
 
-export type ProjectName = "EFS" | "TM" | "DONO" | "ANET" | "LEGAL" | "PHYS"
+export type ProjectName =
+  | "EFS"
+  | "TM"
+  | "ANET"
+  | "LEGAL"
+  | "MAIN-SITE"
+  | "RISK"
+  | "CAREER"
 
 export interface BugReporterOptions {
   project: ProjectName

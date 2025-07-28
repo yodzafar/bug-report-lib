@@ -178,20 +178,15 @@ export function createModal(img: string, cb?: (status: boolean) => void) {
         console.error("Server returned error response:", responseData)
         if (cb) cb(false)
       } else {
-        if (cb) cb(false)
+        if (cb) cb(true)
         localStorage.removeItem("bug-reporter")
       }
     } catch (e) {
-      alert("Error sending bug report.")
       console.error("Network or other error:", e)
-      if (cb) cb(true)
+      if (cb) cb(false)
     }
 
     modal.remove()
-  })
-
-  modal.addEventListener("click", (e) => {
-    if (e.target === modal) modal.remove()
   })
 
   const input = document.getElementById("bug-phone")

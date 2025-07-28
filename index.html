@@ -9,10 +9,10 @@
         margin: 0;
         min-height: 100vh;
         background-color: rgb(241, 238, 238);
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
       }
 
-      button{
+      button {
         padding: 10px 20px;
         font-size: 16px;
         background-color: #007bff;
@@ -25,7 +25,7 @@
   </head>
   <body>
     <h1>Hello Bug Reporter</h1>
-    <button onclick="bug.openModal()">🪲 Report Bug</button>
+    <button onclick="handeleOpen()">🪲 Report Bug</button>
 
     <!-- UMD formatdagi script -->
     <script src="./dist/index.umd.js"></script>
@@ -34,16 +34,20 @@
     <script>
       const bug = new BugReporter.BugReporter({
         project: "EFS",
-      });
+      })
 
+      function handeleOpen() {
+        bug.openModal((status) => {
+          console.log(status)
+        })
+      }
 
-      window.addEventListener('load', () => {
-        console.log('Page loaded');
+      window.addEventListener("load", () => {
+        console.log("Page loaded")
         setTimeout(() => {
-        axios.get('http://test.ru/wrong-url')
-      }, 1000);
-      });
-      
+          axios.get("http://test.ru/wrong-url")
+        }, 1000)
+      })
     </script>
   </body>
 </html>

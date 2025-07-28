@@ -1,11 +1,12 @@
 // index.d.ts
 export type ProjectName =
-  | "ANET"
-  | "CAREER"
-  | "LEGAL"
   | "EFS"
-  | "MAIN-SITE"
   | "TM"
+  | "ANET"
+  | "LEGAL"
+  | "MAIN-SITE"
+  | "RISK"
+  | "CAREER"
 
 export interface BugReporterOptions {
   project: ProjectName
