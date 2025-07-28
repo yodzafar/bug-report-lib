@@ -58,6 +58,7 @@ export class BugReporter {
             response_data: (() => {
               try {
                 const parsed = JSON.parse(body)
+
                 return typeof parsed === "object" && parsed !== null
                   ? parsed
                   : { message: body }
@@ -67,6 +68,7 @@ export class BugReporter {
             })(),
           })
         }
+
         return response
       } catch (error: any) {
         this.storeError({
@@ -78,7 +80,7 @@ export class BugReporter {
               : args[0] instanceof URL
               ? args[0].toString()
               : undefined,
-          response_data: error?.message || error.toString(),
+          response_data: { message: error?.message || error.toString() },
         })
         throw error
       }

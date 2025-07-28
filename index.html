@@ -45,7 +45,7 @@
       window.addEventListener("load", () => {
         console.log("Page loaded")
         setTimeout(() => {
-          axios.get("http://test.ru/wrong-url")
+          fetch("http://test.ru/wrong-url")
         }, 1000)
       })
     </script>
