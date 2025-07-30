@@ -14,6 +14,26 @@ export interface BugReporterOptions {
   project: ProjectName
 }
 
+export type ModalProps = {
+  isClientError?: boolean
+  callback?: (status: boolean) => void
+}
+
+const CLIENT_ERROR_LOGS = "CLIENT_ERROR_LOGS"
+const LAST_ERROR_REQUEST = "LAST_ERROR_REQUEST"
+
+type SubmitData = {
+  comment?: string
+  image: string
+  phone?: string
+  clientError?: boolean
+}
+
+export type SubmitHandler = (
+  { comment, image, phone }: SubmitData,
+  cb?: (status: boolean) => void
+) => Promise<void>
+
 interface BugReportData {
   image: string
   location_url: string
@@ -26,12 +46,15 @@ interface BugReportData {
   project_name: ProjectName
 }
 
+const prodUrl = "http://p-c-ers.asakabank.com/report"
+
 export class BugReporter {
   private project: ProjectName
 
   constructor(options: BugReporterOptions) {
     this.project = options.project
     this.setupErrorListeners()
+    this.setupGlobalErrorListeners()
   }
 
   private setupErrorListeners() {
@@ -192,6 +215,58 @@ export class BugReporter {
     }
   }
 
+  private isHttpError(error: any): boolean {
+    const message =
+      error?.message ||
+      error?.toString?.() ||
+      (typeof error === "string" ? error : "")
+
+    const patterns = [
+      "Load failed",
+      "fetch",
+      "Network Error",
+      "Request failed",
+      "Failed to fetch",
+      "status code",
+      "timeout",
+      "axios",
+      "net::ERR",
+      "Failed to load resource",
+      "A server with the specified hostname could not be found",
+      "Failed to fetch",
+      "ERR_CONNECTION_REFUSED",
+      "ERR_NAME_NOT_RESOLVED",
+    ]
+
+    return patterns.some((pattern) => message.includes(pattern))
+  }
+
+  private setupGlobalErrorListeners() {
+    window.onerror = (message, source, lineno, colno, error) => {
+      if (this.isHttpError(error || message)) return
+
+      this.storeClientError({
+        response_data: {
+          message: error?.message || String(message),
+          source,
+          line: lineno,
+          column: colno,
+        },
+      })
+    }
+
+    window.onunhandledrejection = (event) => {
+      const reason = event?.reason
+      if (this.isHttpError(reason)) return
+      this.storeClientError({
+        response_data: {
+          message:
+            reason?.message || reason?.toString?.() || "Unhandled rejection",
+        },
+      })
+    }
+  }
+
   private storeError(error: Partial<BugReportData>) {
     const newEntry: BugReportData = {
       image: "",
@@ -205,19 +280,111 @@ export class BugReporter {
       response_data: error.response_data ?? {},
     }
 
-    localStorage.setItem("LAST_ERROR_REQUEST", JSON.stringify(newEntry))
+    localStorage.setItem(LAST_ERROR_REQUEST, JSON.stringify(newEntry))
   }
 
-  public async openModal(cb?: (status: boolean) => void) {
-    const list: BugReportData = JSON.parse(
-      localStorage.getItem("LAST_ERROR_REQUEST") || "{}"
+  private storeClientError(error: Partial<BugReportData>) {
+    let logs: BugReportData = JSON.parse(
+      localStorage.getItem(CLIENT_ERROR_LOGS) || "{}"
     )
 
-    if (!list || (list && Object.keys(list).length === 0))
-      return alert("No bugs captured")
+    if (Object.keys(error).length === 0) {
+      console.log(1)
+      logs = {
+        image: "",
+        location_url: window.location.href,
+        user_agent: navigator.userAgent,
+        project_name: this.project,
+        request_url: "",
+        request_header: {},
+        request_payload: {},
+        request_status_code: undefined,
+        response_data: error.response_data
+          ? {
+              client_error: [error.response_data],
+            }
+          : {},
+      }
+    } else {
+      logs = {
+        image: "",
+        location_url: window.location.href,
+        user_agent: navigator.userAgent,
+        project_name: this.project,
+        request_url: "",
+        request_header: {},
+        request_payload: {},
+        request_status_code: undefined,
+        response_data: {
+          client_error: [
+            ...(logs.response_data?.client_error || []),
+            error.response_data,
+          ].slice(-10),
+        },
+      }
+    }
 
+    localStorage.setItem(CLIENT_ERROR_LOGS, JSON.stringify(logs))
+  }
+
+  public async openModal({ isClientError, callback }: ModalProps) {
     const image = await captureScreenshot()
+    if (isClientError) {
+      const lastLogs: BugReportData = JSON.parse(
+        localStorage.getItem(CLIENT_ERROR_LOGS) || "{}"
+      )
+      if (!lastLogs || (lastLogs && Object.keys(lastLogs).length === 0)) {
+        return alert("No client errors captured")
+      }
 
-    createModal(image, cb)
+      createModal(image, (data) =>
+        this.sendReport({ ...data, clientError: true }, callback)
+      )
+    } else {
+      const lastError: BugReportData = JSON.parse(
+        localStorage.getItem(LAST_ERROR_REQUEST) || "{}"
+      )
+
+      if (!lastError || (lastError && Object.keys(lastError).length === 0))
+        return alert("No network errors captured")
+
+      createModal(image, (data) => this.sendReport(data, callback))
+    }
+  }
+
+  private async sendReport(
+    { comment, image, phone, clientError }: SubmitData,
+    cb?: (status: boolean) => void
+  ) {
+    const data = JSON.parse(
+      localStorage.getItem(
+        clientError ? CLIENT_ERROR_LOGS : LAST_ERROR_REQUEST
+      ) || "{}"
+    )
+    const payload = JSON.stringify({ ...data, image, comment, phone })
+
+    try {
+      const res = await fetch(
+        `${prodUrl}${clientError ? `/?is_client_error=true` : ""}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: payload,
+        }
+      )
+
+      const responseData = await res.json()
+
+      if (!res.ok) {
+        console.error("Server returned error response:", responseData)
+        if (cb) cb(false)
+      } else {
+        if (cb) cb(true)
+        localStorage.removeItem(LAST_ERROR_REQUEST)
+      }
+    } catch (e) {
+      console.error("Network or other error:", e)
+      if (cb) cb(false)
+    }
   }
 }

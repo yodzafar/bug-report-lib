@@ -12,7 +12,12 @@ export interface BugReporterOptions {
   project: ProjectName
 }
 
+export type ModalProps = {
+  isClientError?: boolean
+  callback?: (status: boolean) => void
+}
+
 export declare class BugReporter {
   constructor(options: BugReporterOptions)
-  openModal(cb?: (status: boolean) => void): void
+  openModal(props: ModalProps): void
 }

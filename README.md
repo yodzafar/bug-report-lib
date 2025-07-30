@@ -19,18 +19,35 @@ npm install bug-reporterjs-lib
 
 ### Handling Report Status
 
-You can pass a callback to `openModal(cb)` which receives a boolean `status` argument. If `status` is `true`, the report was sent successfully. If `false`, sending failed.
+
+You can pass an object to `openModal` with the following options:
+
+- `callback`: a function that receives a boolean `status` argument. If `status` is `true`, the report was sent successfully. If `false`, sending failed.
+- `isClientError`: if set to `true`, the modal will open for errors detected on the client (for example, manual or UI-triggered errors), not just network or server errors.
 
 **Example:**
 
 ```js
-reporter.openModal((status) => {
-  if (status) {
-    // Report sent successfully
-    alert('Report sent!');
-  } else {
-    // Sending failed
-    alert('Failed to send report.');
+// For network/server errors (default)
+reporter.openModal({
+  callback: (status) => {
+    if (status) {
+      alert('Report sent!');
+    } else {
+      alert('Failed to send report.');
+    }
+  }
+});
+
+// For client-detected errors (e.g. UI or manual errors)
+reporter.openModal({
+  isClientError: true,
+  callback: (status) => {
+    if (status) {
+      alert('Client error report sent!');
+    } else {
+      alert('Failed to send client error report.');
+    }
   }
 });
 ```

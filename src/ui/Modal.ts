@@ -1,7 +1,6 @@
-const devUrl = "http://localhost:3000/report"
-const prodUrl = "http://p-c-ers.asakabank.com/report"
+import { SubmitHandler } from "../core/BugReporter"
 
-export function createModal(img: string, cb?: (status: boolean) => void) {
+export function createModal(img: string, submitCallback: SubmitHandler) {
   // Modal container
   const modal = document.createElement("div")
   modal.id = "bug-modal"
@@ -106,6 +105,7 @@ export function createModal(img: string, cb?: (status: boolean) => void) {
         color: white;
         border: none;
         border-radius: 30px;
+        gap: 10px;
         cursor: pointer;
         transition: all 0.2s;
       }
@@ -115,10 +115,52 @@ export function createModal(img: string, cb?: (status: boolean) => void) {
         box-shadow: 0px 5px 5px 0px #00000040;
       }
 
+      #bug-modal button:disabled {
+        background: #E5E5E5;
+        cursor: not-allowed;
+        color: #6C757D;
+      }
+
+      #bug-modal .loader {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      position: relative;
+      animation: rotate 1s linear infinite
+    }
+
+    #bug-modal .loader.hide {
+      display: none;
+      }
+
+    #bug-modal .loader::before {
+      content: "";
+      box-sizing: border-box;
+      position: absolute;
+      inset: 0px;
+      border-radius: 50%;
+      border: 3px solid #6C757D;
+      animation: prixClipFix 2s linear infinite ;
+    }
+
+    @keyframes rotate {
+      100%   {transform: rotate(360deg)}
+    }
+
+    @keyframes prixClipFix {
+        0%   {clip-path:polygon(50% 50%,0 0,0 0,0 0,0 0,0 0)}
+        25%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 0,100% 0,100% 0)}
+        50%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,100% 100%,100% 100%)}
+        75%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,0 100%,0 100%)}
+        100% {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,0 100%,0 0)}
+    }
+
       @keyframes fadeIn {
         from { opacity: 0; transform: scale(0.95); }
         to { opacity: 1; transform: scale(1); }
       }
+
+
     </style>
     <div class="modal-content">
       <div class="modal-header">
@@ -129,7 +171,10 @@ export function createModal(img: string, cb?: (status: boolean) => void) {
       <input type="tel" pattern="^\+998(9[0-9]|8[1-9]|7[1-9])[0-9]{7}$" placeholder="+998901234567" id="bug-phone" />
       <textarea id="bug-comment" rows="3" placeholder="Оставить комментарий..."></textarea>
       <div class="button-container">
-        <button id="send-btn">Отправить ошибку</button>
+        <button id="send-btn">
+          <span id="bug-loader" class="loader hide"></span>
+          <span>Отправить ошибку</span>
+        </button>
       </div>
     </div>
   `
@@ -137,55 +182,40 @@ export function createModal(img: string, cb?: (status: boolean) => void) {
   document.body.appendChild(modal)
 
   document.getElementById("close-modal")?.addEventListener("click", () => {
-    localStorage.removeItem("bug-reporter")
     modal.remove()
   })
 
-  document.getElementById("send-btn")?.addEventListener("click", async () => {
+  document.getElementById("send-btn")?.addEventListener("click", async (e) => {
     const comment = (
       document.getElementById("bug-comment") as HTMLTextAreaElement
     )?.value
     const phone = (document.getElementById("bug-phone") as HTMLInputElement)
       ?.value
-    const data = JSON.parse(localStorage.getItem("LAST_ERROR_REQUEST") || "{}")
-    const payload = JSON.stringify({ ...data, image: img, comment, phone })
 
-    try {
-      const res = await fetch(prodUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: payload,
-      })
-
-      const responseData = await res.json()
-
-      if (!res.ok) {
-        console.error("Server returned error response:", responseData)
-        if (cb) cb(false)
-      } else {
-        if (cb) cb(true)
-        localStorage.removeItem("bug-reporter")
-      }
-    } catch (e) {
-      console.error("Network or other error:", e)
-      if (cb) cb(false)
+    if (e.currentTarget) {
+      ;(e.currentTarget as HTMLButtonElement).disabled = true
     }
+    const loader = document.getElementById("bug-loader")
+    loader?.classList.remove("hide")
 
+    await submitCallback({ comment, image: img, phone })
+
+    if (e.currentTarget) {
+      ;(e.currentTarget as HTMLButtonElement).disabled = false
+    }
+    loader?.classList.add("hide")
     modal.remove()
   })
 
   const input = document.getElementById("bug-phone")
 
   input?.addEventListener("input", (e) => {
-    // Faqat raqamlar va "+" belgisi ruxsat etiladi
     let value = (e.target as HTMLInputElement)?.value.replace(/[^\d+]/g, "")
 
-    // "+" belgisi faqat boshida bo'lishi mumkin
     if (value.includes("+")) {
       value = "+" + value.replace(/\+/g, "")
     }
 
-    // Maksimal uzunlik nazorati (masalan: +998901234567 — 13 belgidan iborat)
     if (value.length > 13) {
       value = value.slice(0, 13)
     }

@@ -37,15 +37,14 @@
       })
 
       function handeleOpen() {
-        bug.openModal((status) => {
-          console.log(status)
-        })
+        bug.openModal({ isClientError: true })
       }
 
       window.addEventListener("load", () => {
         console.log("Page loaded")
+        window.getInfo()
         setTimeout(() => {
-          fetch("http://test.ru/wrong-url")
+          axios.get("http://test.ru/wrong-url")
         }, 1000)
       })
     </script>
