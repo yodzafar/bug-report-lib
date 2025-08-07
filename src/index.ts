@@ -1,1 +1,6 @@
-export { BugReporter, type BugReporterOptions } from './core/BugReporter';
+export { BugReporter } from "./core/BugReporter"
+export {
+  type BugReporterOptions,
+  type ModalProps,
+  type ProjectName,
+} from "./types"

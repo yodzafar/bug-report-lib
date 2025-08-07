@@ -10,11 +10,12 @@ export type ProjectName =
 
 export interface BugReporterOptions {
   project: ProjectName
+  isJiraCredsRequired?: boolean
 }
 
 export type ModalProps = {
-  isClientError?: boolean
   callback?: (status: boolean) => void
+  locale?: "uz" | "ru" | "en" | "o'z"
 }
 
 export declare class BugReporter {

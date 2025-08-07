@@ -23,12 +23,11 @@ npm install bug-reporterjs-lib
 You can pass an object to `openModal` with the following options:
 
 - `callback`: a function that receives a boolean `status` argument. If `status` is `true`, the report was sent successfully. If `false`, sending failed.
-- `isClientError`: if set to `true`, the modal will open for errors detected on the client (for example, manual or UI-triggered errors), not just network or server errors.
+- `locale`: set the modal language. Supported values: `'uz'`, `'ru'`, `'en'`, or `'o'z'`.
 
 **Example:**
 
 ```js
-// For network/server errors (default)
 reporter.openModal({
   callback: (status) => {
     if (status) {
@@ -36,19 +35,23 @@ reporter.openModal({
     } else {
       alert('Failed to send report.');
     }
-  }
+  },
+  locale: 'ru', // or 'uz', 'en', "o'z"
 });
+```
 
-// For client-detected errors (e.g. UI or manual errors)
-reporter.openModal({
-  isClientError: true,
-  callback: (status) => {
-    if (status) {
-      alert('Client error report sent!');
-    } else {
-      alert('Failed to send client error report.');
-    }
-  }
+### BugReporter Options
+
+You can also pass an additional option to the `BugReporter` constructor:
+
+- `isJiraCredsRequired` (optional): if set to `true`, the modal will require JIRA credentials from the user.
+
+**Example:**
+
+```js
+const reporter = new BugReporter({
+  project: 'EFS',
+  isJiraCredsRequired: true,
 });
 ```
 

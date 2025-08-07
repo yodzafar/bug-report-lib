@@ -15,7 +15,7 @@
       button {
         padding: 10px 20px;
         font-size: 16px;
-        background-color: #007bff;
+        background-color: #065cb9;
         color: white;
         border: none;
         border-radius: 5px;
@@ -34,10 +34,11 @@
     <script>
       const bug = new BugReporter.BugReporter({
         project: "EFS",
+        isJiraCredsRequired: true,
       })
 
       function handeleOpen() {
-        bug.openModal({ isClientError: true })
+        bug.openModal({ locale: "uz" })
       }
 
       window.addEventListener("load", () => {

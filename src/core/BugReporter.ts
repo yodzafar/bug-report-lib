@@ -1,64 +1,32 @@
 import { captureScreenshot } from "../utils/capture"
 import { createModal } from "../ui/Modal"
-
-export type ProjectName =
-  | "EFS"
-  | "TM"
-  | "ANET"
-  | "LEGAL"
-  | "MAIN-SITE"
-  | "RISK"
-  | "CAREER"
-
-export interface BugReporterOptions {
-  project: ProjectName
-}
-
-export type ModalProps = {
-  isClientError?: boolean
-  callback?: (status: boolean) => void
-}
-
-const CLIENT_ERROR_LOGS = "CLIENT_ERROR_LOGS"
-const LAST_ERROR_REQUEST = "LAST_ERROR_REQUEST"
-
-type SubmitData = {
-  comment?: string
-  image: string
-  phone?: string
-  clientError?: boolean
-}
-
-export type SubmitHandler = (
-  { comment, image, phone }: SubmitData,
-  cb?: (status: boolean) => void
-) => Promise<void>
-
-interface BugReportData {
-  image: string
-  location_url: string
-  user_agent: string
-  request_url?: string
-  request_header: Record<string, any>
-  request_status_code?: number
-  request_payload: Record<string, any>
-  response_data: Record<string, any>
-  project_name: ProjectName
-}
-
-const prodUrl = "http://p-c-ers.asakabank.com/report"
+import { getTranslations } from "../utils/getTranslation"
+import {
+  BugReporterOptions,
+  IBugReport,
+  IConsoleErrorData,
+  INetworkReportData,
+  Locale,
+  ModalProps,
+  ProjectName,
+  SubmitData,
+} from "../types"
+import { API_URL, CLIENT_ERROR_LOGS, LAST_ERROR_REQUEST } from "../constants"
 
 export class BugReporter {
   private project: ProjectName
+  private isJiraCredsRequired: boolean
+  locale?: Locale
 
   constructor(options: BugReporterOptions) {
     this.project = options.project
+    this.isJiraCredsRequired = options.isJiraCredsRequired || false
     this.setupErrorListeners()
     this.setupGlobalErrorListeners()
   }
 
   private setupErrorListeners() {
-    // ✅ FETCH hook
+    // ✅ Fetch hook
     const originalFetch = window.fetch
     window.fetch = async (...args) => {
       try {
@@ -67,7 +35,7 @@ export class BugReporter {
           const cloned = response.clone()
           const body = await cloned.text()
 
-          this.storeError({
+          this.storeNetworkError({
             request_url:
               typeof args[0] === "string"
                 ? args[0]
@@ -94,7 +62,7 @@ export class BugReporter {
 
         return response
       } catch (error: any) {
-        this.storeError({
+        this.storeNetworkError({
           request_url:
             typeof args[0] === "string"
               ? args[0]
@@ -191,7 +159,7 @@ export class BugReporter {
                 if (header) headers[header] = value
               })
 
-            reporter.storeError({
+            reporter.storeNetworkError({
               request_url: (xhr as any)._bug_report_url,
               request_payload: serializePayload(body),
               request_header: headers,
@@ -199,7 +167,7 @@ export class BugReporter {
               response_data: responseData,
             })
           } catch (e) {
-            reporter.storeError({
+            reporter.storeNetworkError({
               request_url: (xhr as any)._bug_report_url,
               request_status_code: status,
               response_data: { message: xhr.responseText },
@@ -245,8 +213,8 @@ export class BugReporter {
     window.onerror = (message, source, lineno, colno, error) => {
       if (this.isHttpError(error || message)) return
 
-      this.storeClientError({
-        response_data: {
+      this.storeConsoleError({
+        data: {
           message: error?.message || String(message),
           source,
           line: lineno,
@@ -258,8 +226,8 @@ export class BugReporter {
     window.onunhandledrejection = (event) => {
       const reason = event?.reason
       if (this.isHttpError(reason)) return
-      this.storeClientError({
-        response_data: {
+      this.storeConsoleError({
+        data: {
           message:
             reason?.message || reason?.toString?.() || "Unhandled rejection",
         },
@@ -267,124 +235,122 @@ export class BugReporter {
     }
   }
 
-  private storeError(error: Partial<BugReportData>) {
-    const newEntry: BugReportData = {
-      image: "",
+  private storeNetworkError(error: Partial<INetworkReportData>) {
+    const newEntry: INetworkReportData = {
       request_status_code: error.request_status_code,
-      request_url: error.request_url,
+      request_url: error.request_url || "",
       location_url: window.location.href,
-      user_agent: navigator.userAgent,
-      project_name: this.project,
       request_header: error.request_header ?? {},
       request_payload: error.request_payload ?? {},
       response_data: error.response_data ?? {},
     }
 
-    localStorage.setItem(LAST_ERROR_REQUEST, JSON.stringify(newEntry))
+    sessionStorage.setItem(LAST_ERROR_REQUEST, JSON.stringify(newEntry))
   }
 
-  private storeClientError(error: Partial<BugReportData>) {
-    let logs: BugReportData = JSON.parse(
-      localStorage.getItem(CLIENT_ERROR_LOGS) || "{}"
+  private storeConsoleError(error: { data: any }) {
+    let logs: IConsoleErrorData[] = JSON.parse(
+      sessionStorage.getItem(CLIENT_ERROR_LOGS) || "[]"
     )
 
-    if (Object.keys(error).length === 0) {
-      console.log(1)
-      logs = {
-        image: "",
-        location_url: window.location.href,
-        user_agent: navigator.userAgent,
-        project_name: this.project,
-        request_url: "",
-        request_header: {},
-        request_payload: {},
-        request_status_code: undefined,
-        response_data: error.response_data
-          ? {
-              client_error: [error.response_data],
-            }
-          : {},
-      }
-    } else {
-      logs = {
-        image: "",
-        location_url: window.location.href,
-        user_agent: navigator.userAgent,
-        project_name: this.project,
-        request_url: "",
-        request_header: {},
-        request_payload: {},
-        request_status_code: undefined,
-        response_data: {
-          client_error: [
-            ...(logs.response_data?.client_error || []),
-            error.response_data,
-          ].slice(-10),
-        },
-      }
+    const newEntry: IConsoleErrorData = {
+      location_url: window.location.href,
+      console_error: error.data,
     }
 
-    localStorage.setItem(CLIENT_ERROR_LOGS, JSON.stringify(logs))
+    sessionStorage.setItem(
+      CLIENT_ERROR_LOGS,
+      JSON.stringify([...logs, newEntry].slice(-10))
+    )
   }
 
-  public async openModal({ isClientError, callback }: ModalProps) {
+  public async openModal({ callback, locale }: ModalProps) {
+    this.locale = locale
     const image = await captureScreenshot()
-    if (isClientError) {
-      const lastLogs: BugReportData = JSON.parse(
-        localStorage.getItem(CLIENT_ERROR_LOGS) || "{}"
-      )
-      if (!lastLogs || (lastLogs && Object.keys(lastLogs).length === 0)) {
-        return alert("No client errors captured")
-      }
-
-      createModal(image, (data) =>
-        this.sendReport({ ...data, clientError: true }, callback)
-      )
-    } else {
-      const lastError: BugReportData = JSON.parse(
-        localStorage.getItem(LAST_ERROR_REQUEST) || "{}"
-      )
-
-      if (!lastError || (lastError && Object.keys(lastError).length === 0))
-        return alert("No network errors captured")
-
-      createModal(image, (data) => this.sendReport(data, callback))
-    }
+    createModal(
+      image,
+      (data) => this.sendReport({ image, ...data }, callback),
+      this.locale,
+      this.isJiraCredsRequired
+    )
   }
 
-  private async sendReport(
-    { comment, image, phone, clientError }: SubmitData,
-    cb?: (status: boolean) => void
-  ) {
-    const data = JSON.parse(
-      localStorage.getItem(
-        clientError ? CLIENT_ERROR_LOGS : LAST_ERROR_REQUEST
-      ) || "{}"
+  private collectData({
+    comment,
+    image,
+    phone,
+    password,
+    username,
+  }: SubmitData): IBugReport {
+    const tmp: IBugReport = {
+      project_name: this.project,
+      user_agent: navigator.userAgent,
+      image: image,
+      location_url: window.location.href,
+      request_header: {},
+      request_payload: {},
+      response_data: {},
+      request_status_code: 0,
+      request_url: "",
+      console_error: { data: [] },
+      comment,
+      phone,
+      username,
+      password,
+    }
+
+    const lastLogs: IConsoleErrorData[] = JSON.parse(
+      sessionStorage.getItem(CLIENT_ERROR_LOGS) || "[]"
     )
-    const payload = JSON.stringify({ ...data, image, comment, phone })
+    const lastError: INetworkReportData = JSON.parse(
+      sessionStorage.getItem(LAST_ERROR_REQUEST) || "{}"
+    )
+    if (lastLogs.length > 0) {
+      tmp.console_error = {
+        data: lastLogs
+          .filter((log) => log.location_url === window.location.href)
+          .map((log) => log.console_error)
+          .filter((log): log is Record<string, any> => log !== undefined),
+      }
+    }
+
+    if (lastError.location_url === window.location.href) {
+      tmp.request_url = lastError.request_url
+      tmp.request_header = lastError.request_header
+      tmp.request_status_code = lastError.request_status_code
+      tmp.request_payload = lastError.request_payload
+      tmp.response_data = lastError.response_data
+    }
+
+    return tmp
+  }
+
+  private async sendReport(data: SubmitData, cb?: (status: boolean) => void) {
+    const t = getTranslations(this.locale)
+    const payload = this.collectData(data)
 
     try {
-      const res = await fetch(
-        `${prodUrl}${clientError ? `/?is_client_error=true` : ""}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: payload,
-        }
-      )
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
 
       const responseData = await res.json()
 
       if (!res.ok) {
         console.error("Server returned error response:", responseData)
         if (cb) cb(false)
+        else alert(t("report_failed"))
       } else {
         if (cb) cb(true)
-        localStorage.removeItem(LAST_ERROR_REQUEST)
+        else alert(t("report_success_sent"))
+        sessionStorage.removeItem(LAST_ERROR_REQUEST)
       }
     } catch (e) {
       console.error("Network or other error:", e)
       if (cb) cb(false)
+      else alert(t("report_failed"))
     }
   }
 }
